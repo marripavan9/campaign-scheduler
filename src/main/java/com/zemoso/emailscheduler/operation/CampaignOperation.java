@@ -1,11 +1,11 @@
-package com.zemoso.job;
+package com.zemoso.emailscheduler.operation;
 
 import java.sql.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CampaignOps {
+public class CampaignOperation {
 
     public static Map<Integer, Map<String, Object>> fetchCampaignRecords(Connection conn) throws SQLException {
         Map<Integer, Map<String, Object>> resultMap = new HashMap<>();

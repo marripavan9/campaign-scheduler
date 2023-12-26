@@ -1,21 +1,21 @@
-package com.zemoso.job.retry;
+package com.zemoso.emailscheduler.job;
 
-import com.zemoso.job.DBOps;
+import com.zemoso.emailscheduler.operation.DatabaseOperation;
+import com.zemoso.emailscheduler.service.EmailTriggerJobService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class CampaignStatusCheckerJob implements Job {
+public class ReRunEmailCampaignJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
 
-        try (Connection conn = DBOps.getConnection()) {
+        try (Connection conn = DatabaseOperation.getConnection()) {
             String selectQuery = "SELECT c.*, cr.id AS run_id FROM campaign c " +
                     "INNER JOIN campaign_run cr ON c.id = cr.campaign_id " +
                     "WHERE c.status = 'running' AND cr.end_time IS NULL";
@@ -25,7 +25,7 @@ public class CampaignStatusCheckerJob implements Job {
                     while (resultSet.next()) {
                         int campaignId = resultSet.getInt("id");
                         int runId = resultSet.getInt("run_id");
-                        EmailTriggerJob.triggerEmailsAndUpdateStatus(conn, campaignId, runId);
+                        EmailTriggerJobService.triggerEmailsAndUpdateStatus(conn, campaignId, runId);
                     }
                 }
             }

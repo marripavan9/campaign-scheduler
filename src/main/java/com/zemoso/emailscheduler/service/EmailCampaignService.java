@@ -1,17 +1,17 @@
-package com.zemoso.job.retry;
+package com.zemoso.emailscheduler.service;
 
-import com.zemoso.job.DBOps;
+import com.zemoso.emailscheduler.operation.DatabaseOperation;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class CampaignService {
+public class EmailCampaignService {
 
     public static String getEmailIds(int campaignId) throws SQLException {
         String emailIdsQuery = "SELECT email_ids FROM campaign WHERE id = ?";
-        try (Connection conn = DBOps.getConnection();
+        try (Connection conn = DatabaseOperation.getConnection();
              PreparedStatement emailIdsStmt = conn.prepareStatement(emailIdsQuery)) {
             emailIdsStmt.setInt(1, campaignId);
             try (ResultSet emailIdsResultSet = emailIdsStmt.executeQuery()) {

@@ -1,4 +1,4 @@
-package com.zemoso.job;
+package com.zemoso.emailscheduler.operation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,7 +7,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class DBOps {
+public class DatabaseOperation {
 
     public static Connection getConnection() throws SQLException {
         Properties props = loadProperties();
@@ -16,7 +16,7 @@ public class DBOps {
 
     private static Properties loadProperties() {
         Properties props = new Properties();
-        try (InputStream input = DBOps.class.getClassLoader().getResourceAsStream("application.properties")) {
+        try (InputStream input = DatabaseOperation.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (input != null) {
                 props.load(input);
             } else {

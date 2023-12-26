@@ -1,38 +1,35 @@
-package com.zemoso.job.retry;
+package com.zemoso.emailscheduler.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class EmailService {
+public class EmailStatusService {
 
-    public static boolean shouldTriggerEmail(Connection conn, int runId) throws SQLException {
-        String checkEmailStatusQuery = "SELECT COUNT(*) FROM email_status WHERE campaign_run_id = ? AND status = 'SENT'";
+    public static boolean shouldTriggerEmail(Connection conn, int runId, String email) throws SQLException {
+        String checkEmailStatusQuery = "SELECT COUNT(*) FROM email_status WHERE campaign_run_id = ? AND email_address = ? AND status = 'SENT'";
         try (PreparedStatement checkStatusStmt = conn.prepareStatement(checkEmailStatusQuery)) {
             checkStatusStmt.setInt(1, runId);
+            checkStatusStmt.setString(2, email);
             try (ResultSet resultSet = checkStatusStmt.executeQuery()) {
                 return !resultSet.next() || resultSet.getInt(1) == 0;
             }
         }
     }
 
-    public static void triggerEmails(Connection conn, int runId, String emailIdsString, int successCount, int failureCount) throws SQLException {
-        String[] emailIds = emailIdsString.split(",");
-
-        // Check if any email has 'SENT' status in email_status table
-        boolean shouldTriggerEmail = shouldTriggerEmail(conn, runId);
-
-        if (shouldTriggerEmail) {
-            // Trigger emails
-            for (String email : emailIds) {
-                boolean emailSent = sendEmail(email);
-                if(emailSent) successCount = successCount+1;
-                else failureCount = failureCount+1;
-                // Update email_status table
-                updateEmailStatus(conn, runId, email, emailSent ? "SENT" : "FAILED");
-            }
+    public static boolean triggerEmailAndUpdateStatus(Connection conn, int runId, String email) throws SQLException {
+        boolean emailSent = sendEmail(email);
+        // Create a batch insert statement for email_status
+        String insertEmailStatusQuery = "INSERT INTO email_status (campaign_run_id, email_address, status) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmtEmailStatus = conn.prepareStatement(insertEmailStatusQuery)) {
+            // Batch insert email_status records
+            pstmtEmailStatus.setInt(1, runId);
+            pstmtEmailStatus.setString(2, email);
+            pstmtEmailStatus.setString(3, emailSent ? "SENT" : "FAILED");
+            pstmtEmailStatus.executeUpdate();
         }
+        return emailSent;
     }
 
     private static void updateEmailStatus(Connection conn, int runId, String email, String status) throws SQLException {

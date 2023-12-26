@@ -1,18 +1,18 @@
-package com.zemoso.job;
+package com.zemoso.emailscheduler.operation;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-public class EmailProcessor {
+public class EmailProcessingOperation {
 
     public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, List<String> emailIds) throws SQLException {
         // Set campaign status to 'running'
-        CampaignOps.updateCampaignStatus(conn, campaignId, "running");
+        CampaignOperation.updateCampaignStatus(conn, campaignId, "running");
 
         // Create a record in the campaign_run table
-        int campaignRunId = CampaignOps.createCampaignRunRecord(conn, campaignId);
+        int campaignRunId = CampaignOperation.createCampaignRunRecord(conn, campaignId);
 
         int successCount = 0;
         int failureCount = 0;
@@ -43,11 +43,10 @@ public class EmailProcessor {
         }
 
         // Update the campaign_run table with end_time, success_count, and failure_count
-        CampaignOps.updateCampaignRunRecord(conn, campaignRunId, successCount, failureCount);
+        CampaignOperation.updateCampaignRunRecord(conn, campaignRunId, successCount, failureCount);
 
         // Set campaign status back to 'success'
-        CampaignOps.updateCampaignStatus(conn, campaignId, "success");
-        System.out.println("Done");
+        CampaignOperation.updateCampaignStatus(conn, campaignId, "success");
     }
 
     private static boolean sendEmail(String email) {

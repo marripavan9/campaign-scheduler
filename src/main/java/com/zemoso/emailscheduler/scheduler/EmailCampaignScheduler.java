@@ -1,14 +1,15 @@
-package com.zemoso.job;
+package com.zemoso.emailscheduler.scheduler;
 
-import com.zemoso.job.retry.CampaignStatusCheckerJob;
+import com.zemoso.emailscheduler.job.EmailCampaignJob;
+import com.zemoso.emailscheduler.job.ReRunEmailCampaignJob;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
-public class Scheduler {
+public class EmailCampaignScheduler {
 
     public static void main(String[] args) throws SchedulerException {
         // Create job and trigger
-        JobDetail job = JobBuilder.newJob(MyJob.class)
+        JobDetail job = JobBuilder.newJob(EmailCampaignJob.class)
                 .withIdentity("myJob", "myJobGroup")
                 .build();
 
@@ -24,10 +25,10 @@ public class Scheduler {
         scheduler.start();
 
         // Schedule the job
-        scheduler.scheduleJob(job, trigger);
+      //  scheduler.scheduleJob(job, trigger);
 
         // Define Job Details for the second job
-        JobDetail jobDetail2 = JobBuilder.newJob(CampaignStatusCheckerJob.class)
+        JobDetail jobDetail2 = JobBuilder.newJob(ReRunEmailCampaignJob.class)
                 .withIdentity("emailTriggerJob", "group2")
                 .build();
 
