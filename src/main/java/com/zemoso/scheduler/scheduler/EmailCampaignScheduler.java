@@ -1,7 +1,7 @@
-package com.zemoso.emailscheduler.scheduler;
+package com.zemoso.scheduler.scheduler;
 
-import com.zemoso.emailscheduler.job.EmailCampaignJob;
-import com.zemoso.emailscheduler.job.ReRunEmailCampaignJob;
+import com.zemoso.scheduler.job.EmailCampaignJob;
+import com.zemoso.scheduler.job.ReRunEmailCampaignJob;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -25,7 +25,7 @@ public class EmailCampaignScheduler {
         scheduler.start();
 
         // Schedule the job
-      //  scheduler.scheduleJob(job, trigger);
+        scheduler.scheduleJob(job, trigger);
 
         // Define Job Details for the second job
         JobDetail jobDetail2 = JobBuilder.newJob(ReRunEmailCampaignJob.class)
@@ -41,7 +41,7 @@ public class EmailCampaignScheduler {
                 .build();
 
         // Schedule the second job with the trigger
-        scheduler.scheduleJob(jobDetail2, trigger2);
+       // scheduler.scheduleJob(jobDetail2, trigger2);
 
         // Start the scheduler
         scheduler.start();

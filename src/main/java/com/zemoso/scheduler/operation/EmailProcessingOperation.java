@@ -1,4 +1,6 @@
-package com.zemoso.emailscheduler.operation;
+package com.zemoso.scheduler.operation;
+
+import com.zemoso.scheduler.email.SMTPEmailService;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,9 +9,9 @@ import java.util.List;
 
 public class EmailProcessingOperation {
 
-    public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, List<String> emailIds) throws SQLException {
+    public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, List<String> emailIds, String body) throws SQLException {
         // Set campaign status to 'running'
-        CampaignOperation.updateCampaignStatus(conn, campaignId, "running");
+        CampaignOperation.updateCampaignStatus(conn, campaignId, "RUNNING");
 
         // Create a record in the campaign_run table
         int campaignRunId = CampaignOperation.createCampaignRunRecord(conn, campaignId);
@@ -22,14 +24,12 @@ public class EmailProcessingOperation {
         try (PreparedStatement pstmtEmailStatus = conn.prepareStatement(insertEmailStatusQuery)) {
             for (String email : emailIds) {
                 // Trigger email sending logic here
-                boolean emailSent = sendEmail(email);
-
+                boolean emailSent = SMTPEmailService.sendEmail(email, body);
                 // Batch insert email_status records
                 pstmtEmailStatus.setInt(1, campaignRunId);
                 pstmtEmailStatus.setString(2, email);
                 pstmtEmailStatus.setString(3, emailSent ? "SENT" : "FAILED");
                 pstmtEmailStatus.addBatch();
-
                 // Update success or failure count
                 if (emailSent) {
                     successCount++;
@@ -37,19 +37,12 @@ public class EmailProcessingOperation {
                     failureCount++;
                 }
             }
-
             // Execute batch insert
             pstmtEmailStatus.executeBatch();
         }
-
         // Update the campaign_run table with end_time, success_count, and failure_count
         CampaignOperation.updateCampaignRunRecord(conn, campaignRunId, successCount, failureCount);
-
         // Set campaign status back to 'success'
-        CampaignOperation.updateCampaignStatus(conn, campaignId, "success");
-    }
-
-    private static boolean sendEmail(String email) {
-        return true;
+        CampaignOperation.updateCampaignStatus(conn, campaignId, "SUCCESS");
     }
 }

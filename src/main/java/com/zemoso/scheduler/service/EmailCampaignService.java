@@ -1,6 +1,6 @@
-package com.zemoso.emailscheduler.service;
+package com.zemoso.scheduler.service;
 
-import com.zemoso.emailscheduler.operation.DatabaseOperation;
+import com.zemoso.scheduler.operation.DatabaseOperation;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

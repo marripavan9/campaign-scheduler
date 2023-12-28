@@ -1,4 +1,4 @@
-package com.zemoso.emailscheduler.service;
+package com.zemoso.scheduler.service;
 
 import java.sql.Connection;
 import java.sql.SQLException;

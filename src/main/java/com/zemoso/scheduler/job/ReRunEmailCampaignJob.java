@@ -1,20 +1,24 @@
-package com.zemoso.emailscheduler.job;
+package com.zemoso.scheduler.job;
 
-import com.zemoso.emailscheduler.operation.DatabaseOperation;
-import com.zemoso.emailscheduler.service.EmailTriggerJobService;
+import com.zemoso.scheduler.operation.DatabaseOperation;
+import com.zemoso.scheduler.service.EmailTriggerJobService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 public class ReRunEmailCampaignJob implements Job {
 
+
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
-
+        Date startDate = new Date();
         try (Connection conn = DatabaseOperation.getConnection()) {
             String selectQuery = "SELECT c.*, cr.id AS run_id FROM campaign c " +
                     "INNER JOIN campaign_run cr ON c.id = cr.campaign_id " +
@@ -29,10 +33,14 @@ public class ReRunEmailCampaignJob implements Job {
                     }
                 }
             }
+            Date endDate = new Date();
+            long executionTime = endDate.getTime() - startDate.getTime();
+            double executionTimeInSeconds = executionTime / 1000.0;
+            System.out.println("Execution time: " + executionTimeInSeconds + " seconds");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("Done");
+        System.out.println("Processing Done");
     }
 
 }

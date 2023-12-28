@@ -1,4 +1,4 @@
-package com.zemoso.emailscheduler.operation;
+package com.zemoso.scheduler.operation;
 
 import java.sql.*;
 import java.util.Arrays;
@@ -10,7 +10,7 @@ public class CampaignOperation {
     public static Map<Integer, Map<String, Object>> fetchCampaignRecords(Connection conn) throws SQLException {
         Map<Integer, Map<String, Object>> resultMap = new HashMap<>();
         try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT * FROM campaign WHERE status = 'success' AND CURDATE() BETWEEN start_date AND end_date;");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM campaign WHERE state = 'READY' AND status = 'SUCCESS' AND CURDATE() BETWEEN start_date AND end_date;");
 
             while (rs.next()) {
                 int id = rs.getInt("id");

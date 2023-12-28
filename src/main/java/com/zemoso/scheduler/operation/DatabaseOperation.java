@@ -1,4 +1,4 @@
-package com.zemoso.emailscheduler.operation;
+package com.zemoso.scheduler.operation;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +14,7 @@ public class DatabaseOperation {
         return DriverManager.getConnection(props.getProperty("db.url"), props.getProperty("db.username"), props.getProperty("db.password"));
     }
 
-    private static Properties loadProperties() {
+    public static Properties loadProperties() {
         Properties props = new Properties();
         try (InputStream input = DatabaseOperation.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (input != null) {
