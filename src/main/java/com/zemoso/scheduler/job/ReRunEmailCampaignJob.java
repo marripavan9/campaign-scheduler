@@ -4,8 +4,6 @@ import com.zemoso.scheduler.operation.DatabaseOperation;
 import com.zemoso.scheduler.service.EmailTriggerJobService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
