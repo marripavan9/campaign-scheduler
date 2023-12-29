@@ -54,7 +54,7 @@ public class EmailCampaignService {
 
     public static void updateCampaignRecord(Connection conn, int campaignId) throws SQLException {
         // Update status in campaign table
-        String updateStatusQuery = "UPDATE campaign SET status = 'success' WHERE id = ?";
+        String updateStatusQuery = "UPDATE campaign SET status = 'SUCCESS' WHERE id = ?";
         try (PreparedStatement updateStmt = conn.prepareStatement(updateStatusQuery)) {
             updateStmt.setInt(1, campaignId);
             updateStmt.executeUpdate();

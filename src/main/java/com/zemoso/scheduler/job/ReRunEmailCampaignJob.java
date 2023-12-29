@@ -30,7 +30,7 @@ public class ReRunEmailCampaignJob implements Job {
         try (Connection conn = DatabaseOperation.getConnection()) {
             String selectQuery = "SELECT c.*, cr.id AS run_id FROM campaign c " +
                     "INNER JOIN campaign_run cr ON c.id = cr.campaign_id " +
-                    "WHERE c.status = 'running' AND cr.end_time IS NULL";
+                    "WHERE c.status = 'RUNNING' AND cr.end_time IS NULL";
 
             try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
                 try (ResultSet resultSet = selectStmt.executeQuery()) {
