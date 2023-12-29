@@ -15,7 +15,7 @@ public class CampaignOperation {
     public static Map<Integer, Map<String, Object>> fetchCampaignRecords(Connection conn) throws SQLException {
         Map<Integer, Map<String, Object>> resultMap = new HashMap<>();
         try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT * FROM campaign WHERE state = 'READY' AND status = 'SUCCESS' AND CURDATE() BETWEEN start_date AND end_date;");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM campaign WHERE (status = 'READY' OR status = 'RESUME') AND CURDATE() BETWEEN start_date AND end_date;");
             while (rs.next()) {
                 try {
                     int id = rs.getInt("id");
@@ -36,9 +36,10 @@ public class CampaignOperation {
     }
 
     public static int createCampaignRunRecord(Connection conn, int campaignId) throws SQLException {
-        String insertQuery = "INSERT INTO campaign_run (campaign_id, start_time) VALUES (?, NOW())";
+        String insertQuery = "INSERT INTO campaign_run (campaign_id, start_time, status) VALUES (?, NOW(), ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, campaignId);
+            pstmt.setString(2, "RUNNING");
             pstmt.executeUpdate();
 
             // Get the generated campaign_run_id
@@ -52,20 +53,12 @@ public class CampaignOperation {
     }
 
     public static void updateCampaignRunRecord(Connection conn, int campaignRunId, int successCount, int failureCount) throws SQLException {
-        String updateQuery = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ? WHERE id = ?";
+        String updateQuery = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ?, status = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateQuery)) {
             pstmt.setInt(1, successCount);
             pstmt.setInt(2, failureCount);
-            pstmt.setInt(3, campaignRunId);
-            pstmt.executeUpdate();
-        }
-    }
-
-    public static void updateCampaignStatus(Connection conn, int campaignId, String status) throws SQLException {
-        String updateStatusQuery = "UPDATE campaign SET status = ? WHERE id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(updateStatusQuery)) {
-            pstmt.setString(1, status);
-            pstmt.setInt(2, campaignId);
+            pstmt.setString(3, "SUCCESS");
+            pstmt.setInt(4, campaignRunId);
             pstmt.executeUpdate();
         }
     }

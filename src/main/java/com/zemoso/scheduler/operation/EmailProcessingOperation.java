@@ -10,9 +10,6 @@ import java.util.List;
 public class EmailProcessingOperation {
 
     public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, List<String> emailIds, String body) throws SQLException {
-        // Set campaign status to 'running'
-        CampaignOperation.updateCampaignStatus(conn, campaignId, "RUNNING");
-
         // Create a record in the campaign_run table
         int campaignRunId = CampaignOperation.createCampaignRunRecord(conn, campaignId);
 
@@ -42,7 +39,5 @@ public class EmailProcessingOperation {
         }
         // Update the campaign_run table with end_time, success_count, and failure_count
         CampaignOperation.updateCampaignRunRecord(conn, campaignRunId, successCount, failureCount);
-        // Set campaign status back to 'success'
-        CampaignOperation.updateCampaignStatus(conn, campaignId, "SUCCESS");
     }
 }

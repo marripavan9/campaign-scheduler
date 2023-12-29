@@ -24,6 +24,5 @@ public class EmailTriggerJobService {
             }
         }
         EmailCampaignService.updateCampaignRunRecord(conn, runId, successCount, failureCount);
-        EmailCampaignService.updateCampaignRecord(conn, campaignId);
     }
 }

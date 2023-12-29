@@ -25,7 +25,7 @@ public class EmailCampaignService {
 
     public static void updateCampaignRunRecord(Connection conn, int campaignRunId, int successCount, int failureCount) throws SQLException {
         String selectQuery = "SELECT success_count, failure_count FROM campaign_run WHERE id = ?";
-        String updateQuery = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ? WHERE id = ?";
+        String updateQuery = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ?, status = ? WHERE id = ?";
 
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
             selectStmt.setInt(1, campaignRunId);
@@ -47,16 +47,8 @@ public class EmailCampaignService {
         try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
             updateStmt.setInt(1, successCount);
             updateStmt.setInt(2, failureCount);
-            updateStmt.setInt(3, campaignRunId);
-            updateStmt.executeUpdate();
-        }
-    }
-
-    public static void updateCampaignRecord(Connection conn, int campaignId) throws SQLException {
-        // Update status in campaign table
-        String updateStatusQuery = "UPDATE campaign SET status = 'SUCCESS' WHERE id = ?";
-        try (PreparedStatement updateStmt = conn.prepareStatement(updateStatusQuery)) {
-            updateStmt.setInt(1, campaignId);
+            updateStmt.setString(3, "SUCCESS");
+            updateStmt.setInt(4, campaignRunId);
             updateStmt.executeUpdate();
         }
     }
