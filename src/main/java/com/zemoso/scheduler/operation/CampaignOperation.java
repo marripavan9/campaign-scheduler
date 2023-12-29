@@ -1,5 +1,8 @@
 package com.zemoso.scheduler.operation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -7,20 +10,26 @@ import java.util.Map;
 
 public class CampaignOperation {
 
+    private static final Logger logger = LoggerFactory.getLogger(CampaignOperation.class);
+
     public static Map<Integer, Map<String, Object>> fetchCampaignRecords(Connection conn) throws SQLException {
         Map<Integer, Map<String, Object>> resultMap = new HashMap<>();
         try (Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery("SELECT * FROM campaign WHERE state = 'READY' AND status = 'SUCCESS' AND CURDATE() BETWEEN start_date AND end_date;");
-
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String content = rs.getString("content");
-                String emailIdsStr = rs.getString("email_ids");
-                String[] emails = emailIdsStr.split(",");
-                Map<String, Object> entryMap = new HashMap<>();
-                entryMap.put("content", content);
-                entryMap.put("emailIds", Arrays.asList(emails));
-                resultMap.put(id, entryMap);
+                try {
+                    int id = rs.getInt("id");
+                    String content = rs.getString("content");
+                    String emailIdsStr = rs.getString("email_ids");
+                    String[] emails = emailIdsStr.split(",");
+                    Map<String, Object> entryMap = new HashMap<>();
+                    entryMap.put("content", content);
+                    entryMap.put("emailIds", Arrays.asList(emails));
+                    resultMap.put(id, entryMap);
+                } catch (SQLException e) {
+                    logger.error("Exception while processing a campaign record: {}", e.getMessage());
+                    logger.debug("Exception details:", e);
+                }
             }
         }
         return resultMap;
