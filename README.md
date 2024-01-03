@@ -12,7 +12,7 @@ The campaignId will be extracted from the campaign_run table, which will be help
 
 ## Job Execution:
 
-Updates the status of the selected campaign_run records to 'PROCESSING'.
+Updates the status of the selected campaign_run records to **'RUNNING'**.
 
 ## Email Triggering:
 
