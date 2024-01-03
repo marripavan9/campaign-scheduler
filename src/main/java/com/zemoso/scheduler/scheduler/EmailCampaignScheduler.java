@@ -25,7 +25,7 @@ public class EmailCampaignScheduler {
         scheduler.start();
 
         // Schedule the job
-       // scheduler.scheduleJob(job, trigger);
+        scheduler.scheduleJob(job, trigger);
 
         // Define Job Details for the second job
         JobDetail jobDetail2 = JobBuilder.newJob(ReRunEmailCampaignJob.class)
