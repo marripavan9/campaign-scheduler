@@ -6,17 +6,22 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EmailCampaignService {
 
-    public static String getEmailIds(int campaignId) throws SQLException {
-        String emailIdsQuery = "SELECT email_ids FROM campaign WHERE id = ?";
+    public static Map<String, String> getEmailIdsAndContent(int campaignId) throws SQLException {
+        String emailIdsQuery = "SELECT email_ids, content FROM campaign WHERE id = ?";
         try (Connection conn = DatabaseOperation.getConnection();
              PreparedStatement emailIdsStmt = conn.prepareStatement(emailIdsQuery)) {
             emailIdsStmt.setInt(1, campaignId);
             try (ResultSet emailIdsResultSet = emailIdsStmt.executeQuery()) {
                 if (emailIdsResultSet.next()) {
-                    return emailIdsResultSet.getString("email_ids");
+                    Map<String, String> result = new HashMap<>();
+                    result.put("email_ids", emailIdsResultSet.getString("email_ids"));
+                    result.put("content", emailIdsResultSet.getString("content"));
+                    return result;
                 }
                 return null;
             }

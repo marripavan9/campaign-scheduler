@@ -1,5 +1,7 @@
 package com.zemoso.scheduler.service;
 
+import com.zemoso.scheduler.email.SMTPEmailService;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -18,8 +20,8 @@ public class EmailStatusService {
         }
     }
 
-    public static boolean triggerEmailAndUpdateStatus(Connection conn, int runId, String email) throws SQLException {
-        boolean emailSent = sendEmail(email);
+    public static boolean triggerEmailAndUpdateStatus(Connection conn, int runId, String email, String body) throws SQLException {
+        boolean emailSent = SMTPEmailService.sendEmail(email, body);
         // Create a batch insert statement for email_status
         String insertEmailStatusQuery = "INSERT INTO email_status (campaign_run_id, email_address, status) VALUES (?, ?, ?)";
         try (PreparedStatement pstmtEmailStatus = conn.prepareStatement(insertEmailStatusQuery)) {
