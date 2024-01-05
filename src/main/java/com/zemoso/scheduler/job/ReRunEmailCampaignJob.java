@@ -44,9 +44,8 @@ public class ReRunEmailCampaignJob implements Job {
 
     private List<Future<Void>> processRunningCampaigns(Connection conn, ExecutorService executorService) throws SQLException {
         List<Future<Void>> futures = new ArrayList<>();
-        String selectQuery = "SELECT c.*, cr.id AS run_id FROM campaign c " +
-                "INNER JOIN campaign_run cr ON c.id = cr.campaign_id " +
-                "WHERE cr.status = 'RUNNING' AND cr.end_time IS NULL";
+        String selectQuery = "SELECT c.*, cr.id AS run_id FROM campaign c INNER JOIN campaign_run cr ON c.id = cr.campaign_id " +
+                "WHERE cr.status NOT IN ('SUCCESS', 'RUNNING') AND cr.start_time < NOW() - INTERVAL 1 MINUTE AND NOW() < c.end_date AND cr.retry_count < cr.retry_limit;";
 
         try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
              ResultSet resultSet = selectStmt.executeQuery()) {
@@ -78,5 +77,6 @@ public class ReRunEmailCampaignJob implements Job {
         long executionTime = endDate.getTime() - startDate.getTime();
         double executionTimeInSeconds = executionTime / 1000.0;
         logger.info("Execution time: {} seconds", executionTimeInSeconds);
+        System.out.println("Processing Done");
     }
 }

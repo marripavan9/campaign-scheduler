@@ -17,6 +17,7 @@ public class FieldNames {
     public static final String CAMPAIGN_RUN_END_TIME = "end_time";
     public static final String CAMPAIGN_RUN_SUCCESS_COUNT = "success_count";
     public static final String CAMPAIGN_RUN_FAILURE_COUNT = "failure_count";
+    public static final String CAMPAIGN_RUN_RETRY_COUNT = "retry_count";
     public static final String CAMPAIGN_RUN_STATUS = "status";
 
     public static final String EMAIL_USERNAME_KEY = "email.username";
@@ -30,6 +31,8 @@ public class FieldNames {
     public static final String COMMA = ",";
     public static final String RUNNING = "RUNNING";
     public static final String SUCCESS = "SUCCESS";
+    public static final String PARTIALLY_SUCCESS = "PARTIALLY_SUCCESS";
+    public static final String FAILED = "FAILED";
     public static final String READY = "READY";
     public static final String RESUME = "RESUME";
 

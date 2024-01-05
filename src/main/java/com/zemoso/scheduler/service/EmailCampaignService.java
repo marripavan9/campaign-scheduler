@@ -17,8 +17,8 @@ public class EmailCampaignService {
     private static final Logger logger = LoggerFactory.getLogger(EmailCampaignService.class);
 
     private static final String SELECT_EMAIL_CONTENT_QUERY = "SELECT email_ids, content FROM campaign WHERE id = ?";
-    private static final String SELECT_CAMPAIGN_RUN_QUERY = "SELECT success_count, failure_count FROM campaign_run WHERE id = ?";
-    private static final String UPDATE_CAMPAIGN_RUN_QUERY = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ?, status = ? WHERE id = ?";
+    private static final String SELECT_CAMPAIGN_RUN_QUERY = "SELECT success_count, failure_count, retry_count FROM campaign_run WHERE id = ?";
+    private static final String UPDATE_CAMPAIGN_RUN_QUERY = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ?, status = ?, retry_count =? WHERE id = ?";
 
     public static Map<String, String> getEmailIdsAndContent(int campaignId) throws SQLException {
         try (Connection conn = DatabaseConnector.getConnection();
@@ -43,6 +43,7 @@ public class EmailCampaignService {
     public static void updateCampaignRunRecord(Connection conn, int campaignRunId, int successCount, int failureCount) throws SQLException {
         int existingSuccessCount = 0;
         int existingFailureCount = 0;
+        int retryCount = 0;
 
         try (PreparedStatement selectStmt = conn.prepareStatement(SELECT_CAMPAIGN_RUN_QUERY)) {
             selectStmt.setInt(1, campaignRunId);
@@ -51,6 +52,7 @@ public class EmailCampaignService {
                 if (resultSet.next()) {
                     existingSuccessCount = resultSet.getInt(FieldNames.CAMPAIGN_RUN_SUCCESS_COUNT);
                     existingFailureCount = resultSet.getInt(FieldNames.CAMPAIGN_RUN_FAILURE_COUNT);
+                    retryCount = resultSet.getInt(FieldNames.CAMPAIGN_RUN_RETRY_COUNT);
                 }
             }
         } catch (SQLException e) {
@@ -61,15 +63,36 @@ public class EmailCampaignService {
         successCount += existingSuccessCount;
         failureCount += existingFailureCount;
 
+        String status = FieldNames.SUCCESS;
+
+        if(successCount > 0 && failureCount > 0) {
+            status = FieldNames.PARTIALLY_SUCCESS;
+        } else if(successCount == 0 && failureCount > 0) {
+            status = FieldNames.FAILED;
+        }
+
         try (PreparedStatement updateStmt = conn.prepareStatement(UPDATE_CAMPAIGN_RUN_QUERY)) {
             updateStmt.setInt(1, successCount);
             updateStmt.setInt(2, failureCount);
-            updateStmt.setString(3, FieldNames.SUCCESS);
-            updateStmt.setInt(4, campaignRunId);
+            updateStmt.setString(3, status);
+            updateStmt.setInt(4, retryCount+1);
+            updateStmt.setInt(5, campaignRunId);
             updateStmt.executeUpdate();
         } catch (SQLException e) {
             handleSQLException("Error updating campaign run record", e);
             throw new SQLException("Error updating campaign run record", e);
+        }
+    }
+
+    public static void insertAuditLogRecord(Connection conn, int campaignRunId, int successCount, int failureCount) throws SQLException {
+        String insertQuery = "INSERT INTO campaign_run_audit_log (campaign_run_id, start_time, status, success_count, failure_count) " +
+                "SELECT id, start_time, status, ?, ? FROM campaign_run WHERE id = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
+            pstmt.setInt(1, successCount);
+            pstmt.setInt(2, failureCount);
+            pstmt.setInt(3, campaignRunId);
+            pstmt.executeUpdate();
         }
     }
 

@@ -18,29 +18,18 @@ public class EmailProcessingOperation {
         int campaignRunId;
         int successCount = 0;
         int failureCount = 0;
-
         try {
-            conn.setAutoCommit(false);
             campaignRunId = CampaignOperation.createCampaignRunRecord(conn, campaignId);
-            String insertEmailStatusQuery = "INSERT INTO email_status (campaign_run_id, email_address, status) VALUES (?, ?, ?)";
-
-            try (PreparedStatement pstmtEmailStatus = conn.prepareStatement(insertEmailStatusQuery)) {
-                for (String email : emailIds) {
-                    boolean emailSent = SMTPEmailService.sendEmail(email, body);
-                    pstmtEmailStatus.setInt(1, campaignRunId);
-                    pstmtEmailStatus.setString(2, email);
-                    pstmtEmailStatus.setString(3, emailSent ? FieldNames.EMAIL_SENT : FieldNames.EMAIL_FAILED);
-                    pstmtEmailStatus.addBatch();
-                    if (emailSent) {
-                        successCount++;
-                    } else {
-                        failureCount++;
-                    }
+            for (String email : emailIds) {
+                boolean emailSent = SMTPEmailService.sendEmailWithRetry(email, body, campaignRunId, conn);
+                if (emailSent) {
+                    successCount++;
+                } else {
+                    failureCount++;
                 }
-                pstmtEmailStatus.executeBatch();
             }
-            conn.commit();
             CampaignOperation.updateCampaignRunRecord(conn, campaignRunId, successCount, failureCount);
+            CampaignOperation.insertAuditLogRecord(conn, campaignRunId, successCount, failureCount);
         } catch (SQLException e) {
             handleSQLException(conn, e);
         } finally {
@@ -49,6 +38,7 @@ public class EmailProcessingOperation {
     }
 
     private static void handleSQLException(Connection conn, SQLException e) {
+        e.printStackTrace();
         logger.error("Error processing emails: {}", e.getMessage(), e);
         try {
             if (conn != null) {
@@ -62,7 +52,6 @@ public class EmailProcessingOperation {
     private static void closeConnection(Connection conn) {
         try {
             if (conn != null) {
-                conn.setAutoCommit(true);
                 conn.close();
             }
         } catch (SQLException closeException) {

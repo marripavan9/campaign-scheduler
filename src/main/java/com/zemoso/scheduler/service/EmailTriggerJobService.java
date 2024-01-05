@@ -1,6 +1,7 @@
 package com.zemoso.scheduler.service;
 
 import com.zemoso.scheduler.constants.FieldNames;
+import com.zemoso.scheduler.operation.CampaignOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,16 @@ public class EmailTriggerJobService {
             }
 
             updateCampaignRunRecord(conn, runId, successCount, failureCount);
+            insertAuditLogRecord(conn, runId, successCount, failureCount);
+        }
+    }
+
+    private static void insertAuditLogRecord(Connection conn, int runId, int successCount, int failureCount) throws SQLException {
+        try {
+            EmailCampaignService.insertAuditLogRecord(conn, runId, successCount, failureCount);
+        } catch (SQLException e) {
+            handleSQLException("Error updating campaign run record", e);
+            throw new SQLException("Error updating campaign run record", e);
         }
     }
 

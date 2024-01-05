@@ -31,19 +31,7 @@ public class EmailStatusService {
     }
 
     public static boolean triggerEmailAndUpdateStatus(Connection conn, int runId, String email, String body) throws SQLException {
-        boolean emailSent = SMTPEmailService.sendEmail(email, body);
-
-        try (PreparedStatement pstmtEmailStatus = conn.prepareStatement(INSERT_EMAIL_STATUS_QUERY)) {
-            pstmtEmailStatus.setInt(1, runId);
-            pstmtEmailStatus.setString(2, email);
-            pstmtEmailStatus.setString(3, emailSent ? "SENT" : "FAILED");
-            pstmtEmailStatus.executeUpdate();
-        } catch (SQLException e) {
-            handleSQLException("Error triggering email and updating status", e);
-            throw new SQLException("Error triggering email and updating status", e);
-        }
-
-        return emailSent;
+        return SMTPEmailService.sendEmailWithRetry(email, body, runId, conn);
     }
 
     private static void handleSQLException(String message, SQLException e) {

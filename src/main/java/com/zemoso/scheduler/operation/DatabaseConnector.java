@@ -16,11 +16,11 @@ public class DatabaseConnector {
     public static Connection getConnection() throws SQLException {
         Properties props = PropertiesLoader.loadProperties();
 
-        try (Connection connection = DriverManager.getConnection(
-                props.getProperty(FieldNames.DB_URL),
-                props.getProperty(FieldNames.DB_USERNAME),
-                props.getProperty(FieldNames.DB_PASSWORD))) {
-            return connection;
+        try  {
+            return DriverManager.getConnection(
+                    props.getProperty(FieldNames.DB_URL),
+                    props.getProperty(FieldNames.DB_USERNAME),
+                    props.getProperty(FieldNames.DB_PASSWORD));
         } catch (SQLException e) {
             logger.error("Error connecting to the database: {}", e.getMessage(), e);
             throw e;

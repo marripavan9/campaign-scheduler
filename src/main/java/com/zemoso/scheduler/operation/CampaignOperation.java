@@ -76,15 +76,50 @@ public class CampaignOperation {
     public static void updateCampaignRunRecord(Connection conn, int campaignRunId, int successCount, int failureCount) {
         String updateQuery = "UPDATE campaign_run SET end_time = NOW(), success_count = ?, failure_count = ?, status = ? WHERE id = ?";
 
+        String status = FieldNames.SUCCESS;
+
+        if(successCount > 0 && failureCount > 0) {
+            status = FieldNames.PARTIALLY_SUCCESS;
+        } else if(successCount == 0 && failureCount > 0) {
+            status = FieldNames.FAILED;
+        }
+
         try (PreparedStatement pstmt = conn.prepareStatement(updateQuery)) {
             pstmt.setInt(1, successCount);
             pstmt.setInt(2, failureCount);
-            pstmt.setString(3, FieldNames.SUCCESS);
+            pstmt.setString(3, status);
             pstmt.setInt(4, campaignRunId);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             logError("Exception while updating campaign run record", e);
         }
+    }
+
+    public static void insertAuditLogRecord(Connection conn, int campaignRunId, int successCount, int failureCount) throws SQLException {
+        String insertQuery = "INSERT INTO campaign_run_audit_log (campaign_run_id, start_time, status, success_count, failure_count) " +
+                "SELECT id, start_time, status, ?, ? FROM campaign_run WHERE id = ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
+            pstmt.setInt(1, successCount);
+            pstmt.setInt(2, failureCount);
+            pstmt.setInt(3, campaignRunId);
+            pstmt.executeUpdate();
+        }
+    }
+
+    public static int getRetryLimit(Connection conn, int campaignRunId) {
+        String selectQuery = "SELECT retry_limit FROM campaign_run WHERE id = ?";
+        try (PreparedStatement selectStmt = conn.prepareStatement(selectQuery)) {
+            selectStmt.setInt(1, campaignRunId);
+            try (ResultSet resultSet = selectStmt.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("retry_limit");
+                }
+            }
+        } catch (SQLException e) {
+            logError("Error retrieving retry limit", e);
+        }
+        return 3;
     }
 
     private static void logError(String message, SQLException e) {

@@ -50,7 +50,7 @@ public class EmailCampaignJob implements Job {
     }
 
     private void processCampaign(int campaignId, Map<String, Object> campaignData, ExecutorService executorService, Connection conn, List<Future<?>> futures) {
-        List<String> emailIds = (List<String>) campaignData.getOrDefault("emailIds", Collections.emptyList());
+        List<String> emailIds = (List<String>) campaignData.getOrDefault("email_ids", Collections.emptyList());
         String content = (String) campaignData.get("content");
         Runnable task = () -> {
             try {
