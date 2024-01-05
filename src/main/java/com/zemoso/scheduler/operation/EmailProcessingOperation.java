@@ -6,21 +6,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.List;
 
 public class EmailProcessingOperation {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailProcessingOperation.class);
 
-    public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, List<String> emailIds, String body) {
+    public static void triggerEmailsAndRecordStatus(Connection conn, int campaignId, String emailIds, String body) {
         int campaignRunId;
         int successCount = 0;
         int failureCount = 0;
         try {
             campaignRunId = CampaignOperation.createCampaignRunRecord(conn, campaignId);
-            for (String email : emailIds) {
+            String[] emails = emailIds.split(FieldNames.COMMA);
+            for (String email : emails) {
                 boolean emailSent = SMTPEmailService.sendEmailWithRetry(email, body, campaignRunId, conn);
                 if (emailSent) {
                     successCount++;

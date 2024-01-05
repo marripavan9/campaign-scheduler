@@ -1,20 +1,20 @@
 package com.zemoso.scheduler.operation;
 
 import com.zemoso.scheduler.constants.FieldNames;
+import com.zemoso.scheduler.model.Campaign;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 
 public class CampaignOperation {
 
     private static final Logger logger = LoggerFactory.getLogger(CampaignOperation.class);
 
-    public static Map<Integer, Map<String, Object>> fetchCampaignRecords(Connection conn) {
-        Map<Integer, Map<String, Object>> resultMap = new HashMap<>();
+    public static List<Campaign> fetchCampaignRecords(Connection conn) {
+        List<Campaign> campaignList = new ArrayList<>();
 
         String query = "SELECT * FROM campaign WHERE (status = ? OR status = ?) AND CURDATE() BETWEEN start_date AND end_date;";
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -23,29 +23,15 @@ public class CampaignOperation {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    processCampaignRecord(rs, resultMap);
+                    Campaign campaign = processCampaignRecord(rs);
+                    campaignList.add(campaign);
                 }
             }
         } catch (SQLException e) {
             logError("Exception while fetching campaign records", e);
         }
 
-        return resultMap;
-    }
-
-    private static void processCampaignRecord(ResultSet rs, Map<Integer, Map<String, Object>> resultMap) {
-        try {
-            int id = rs.getInt(FieldNames.CAMPAIGN_ID);
-            String content = rs.getString(FieldNames.CAMPAIGN_CONTENT);
-            String emailIdsStr = rs.getString(FieldNames.CAMPAIGN_EMAIL_IDS);
-            String[] emails = emailIdsStr.split(FieldNames.COMMA);
-            Map<String, Object> entryMap = new HashMap<>();
-            entryMap.put(FieldNames.CAMPAIGN_CONTENT, content);
-            entryMap.put(FieldNames.CAMPAIGN_EMAIL_IDS, Arrays.asList(emails));
-            resultMap.put(id, entryMap);
-        } catch (SQLException e) {
-            logError("Exception while processing a campaign record", e);
-        }
+        return campaignList;
     }
 
     public static int createCampaignRunRecord(Connection conn, int campaignId) {
@@ -125,6 +111,37 @@ public class CampaignOperation {
     private static void logError(String message, SQLException e) {
         logger.error("{}: {}", message, e.getMessage(), e);
         e.printStackTrace();
+    }
+
+    public static Campaign fetchUpdatedCampaignByIdFromDatabase(Connection conn, int id, LocalDateTime lastRunTimestamp) {
+        String query = "SELECT * FROM campaign WHERE id = ? AND status = ? AND last_updated > ? AND CURDATE() BETWEEN start_date AND end_date;";
+        try (PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.setString(2, FieldNames.READY);
+            pstmt.setTimestamp(3, Timestamp.valueOf(lastRunTimestamp));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return processCampaignRecord(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static Campaign processCampaignRecord(ResultSet rs) throws SQLException {
+        Campaign campaign = new Campaign();
+        campaign.setId(rs.getInt("id"));
+        campaign.setContent(rs.getString("content"));
+        campaign.setEmailIds(rs.getString("email_ids"));
+        campaign.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
+        campaign.setEndDate(rs.getTimestamp("end_date") != null ? rs.getTimestamp("end_date").toLocalDateTime() : null);
+        campaign.setFrequency(rs.getString("frequency"));
+        campaign.setStatus(rs.getString("status"));
+        campaign.setLastUpdated(rs.getTimestamp("last_updated").toLocalDateTime());
+        return campaign;
     }
 }
 
