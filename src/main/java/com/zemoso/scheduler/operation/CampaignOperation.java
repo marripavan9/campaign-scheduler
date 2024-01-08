@@ -143,5 +143,31 @@ public class CampaignOperation {
         campaign.setLastUpdated(rs.getTimestamp("last_updated").toLocalDateTime());
         return campaign;
     }
+
+    public static void updateOrInsertEmailStatus(Connection conn, int campaignRunId, String email, int retryCount, String errorMessage, String status) throws SQLException {
+        String updateQuery = "UPDATE email_status SET retry_count = ?, error_message = ? WHERE campaign_run_id = ? AND email_address = ?";
+        String insertQuery = "INSERT INTO email_status (campaign_run_id, email_address, retry_count, error_message, status) VALUES (?, ?, ?, ?, ?)";
+
+        try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+            updateStmt.setInt(1, retryCount);
+            updateStmt.setString(2, errorMessage);
+            updateStmt.setInt(3, campaignRunId);
+            updateStmt.setString(4, email);
+
+            int rowsUpdated = updateStmt.executeUpdate();
+
+            if (rowsUpdated == 0) {
+                // If no rows were updated, insert a new record
+                try (PreparedStatement insertStmt = conn.prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, campaignRunId);
+                    insertStmt.setString(2, email);
+                    insertStmt.setInt(3, retryCount);
+                    insertStmt.setString(4, errorMessage);
+                    insertStmt.setString(5, status);
+                    insertStmt.executeUpdate();
+                }
+            }
+        }
+    }
 }
 
