@@ -1,45 +1,81 @@
 package com.zemoso.scheduler.scheduler;
 
+import com.zemoso.scheduler.constants.FieldNames;
 import com.zemoso.scheduler.job.EmailCampaignJob;
 import com.zemoso.scheduler.job.ReRunEmailCampaignJob;
 import com.zemoso.scheduler.model.Campaign;
 import com.zemoso.scheduler.operation.CampaignOperation;
 import com.zemoso.scheduler.operation.DatabaseConnector;
+import com.zemoso.scheduler.operation.PropertiesLoader;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Properties;
 
 public class EmailCampaignScheduler {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailCampaignScheduler.class);
+
 
     public static void main(String[] args) {
         try {
             scheduleRegularEmailJob();
             scheduleReRunEmailJob();
-        } catch (SchedulerException | SQLException e) {
-            e.printStackTrace();
+        } catch (SchedulerException se) {
+            logger.error("Error scheduling job: {}", se.getMessage(), se);
+        } catch (SQLException sqlException) {
+            logger.error("Error in database operation: {}", sqlException.getMessage(), sqlException);
         }
     }
 
     private static void scheduleRegularEmailJob() throws SchedulerException, SQLException {
         List<Campaign> campaigns = CampaignOperation.fetchCampaignRecords(DatabaseConnector.getConnection());
         for (Campaign campaign : campaigns) {
-            String cronExpression = campaign.getFrequency();
-            JobDetail emailJob = createJobDetail(EmailCampaignJob.class, "emailJob_" + campaign.getId(), "emailJobGroup");
-            emailJob.getJobDataMap().put("campaign", campaign);
-            emailJob.getJobDataMap().put("firstRun", true);
-            emailJob.getJobDataMap().put("runTime", LocalDateTime.now());
-            Trigger emailTrigger = createCronTrigger(cronExpression, "emailTrigger_" + campaign.getId(), "emailTriggerGroup");
-            scheduleJob(emailJob, emailTrigger);
+            scheduleEmailJobForCampaign(campaign);
         }
     }
 
+    private static void scheduleEmailJobForCampaign(Campaign campaign) throws SchedulerException {
+        String cronExpression = campaign.getFrequency();
+        JobDetail emailJob = createEmailJobDetail(campaign);
+        Trigger emailTrigger = createEmailCronTrigger(cronExpression, campaign);
+        scheduleJob(emailJob, emailTrigger);
+    }
+
+    private static JobDetail createEmailJobDetail(Campaign campaign) {
+        JobDetail emailJob = createJobDetail(EmailCampaignJob.class, "emailJob_" + campaign.getId(), "emailJobGroup");
+        emailJob.getJobDataMap().put(FieldNames.CAMPAIGN, campaign);
+        emailJob.getJobDataMap().put(FieldNames.FIRST_RUN, true);
+        emailJob.getJobDataMap().put(FieldNames.RUN_TIME, LocalDateTime.now());
+        return emailJob;
+    }
+
+    private static Trigger createEmailCronTrigger(String cronExpression, Campaign campaign) {
+        return createCronTrigger(cronExpression, "emailTrigger_" + campaign.getId(), "emailTriggerGroup");
+    }
+
     private static void scheduleReRunEmailJob() throws SchedulerException {
-        JobDetail reRunEmailJob = createJobDetail(ReRunEmailCampaignJob.class, "emailTriggerJob", "group2");
-        Trigger reRunEmailTrigger = createCronTrigger("0 0/10 * * * ?", "trigger2", "group2");
+        Properties properties = loadReRunEmailProperties();
+        JobDetail reRunEmailJob = createReRunEmailJobDetail();
+        Trigger reRunEmailTrigger = createReRunEmailCronTrigger(properties);
         scheduleJob(reRunEmailJob, reRunEmailTrigger);
+    }
+
+    private static Properties loadReRunEmailProperties() {
+        return PropertiesLoader.loadProperties();
+    }
+
+    private static JobDetail createReRunEmailJobDetail() {
+        return createJobDetail(ReRunEmailCampaignJob.class, "emailTriggerJob", "group2");
+    }
+
+    private static Trigger createReRunEmailCronTrigger(Properties properties) {
+        return createCronTrigger(properties.getProperty(FieldNames.RERUN_CRON), "trigger2", "group2");
     }
 
     private static JobDetail createJobDetail(Class<? extends Job> jobClass, String jobName, String jobGroup) {

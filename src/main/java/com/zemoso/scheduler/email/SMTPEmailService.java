@@ -65,7 +65,7 @@ public class SMTPEmailService {
     }
 
     private static Session createSession(String username, String password, Properties prop) {
-        return Session.getInstance(prop, new javax.mail.Authenticator() {
+        return Session.getInstance(prop, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);
             }
@@ -78,7 +78,7 @@ public class SMTPEmailService {
         message.setFrom(new InternetAddress(from));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject(subject);
-        message.setText(body);
+        message.setContent(body, HTML_DEFAULT_CHARSET);
         return message;
     }
 

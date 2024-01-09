@@ -45,4 +45,11 @@ public class FieldNames {
     public static final String CONFIG_FILE_NAME = "application.properties";
     public static final String EMAIL_SENT = "SENT";
     public static final String EMAIL_FAILED = "FAILED";
+
+
+    public static final String HTML_DEFAULT_CHARSET = "text/html;charset=UTF-8";
+    public static final String CAMPAIGN = "campaign";
+    public static final String FIRST_RUN = "firstRun";
+    public static final String RUN_TIME = "runTime";
+    public static final String RERUN_CRON = "rerun.cron";
 }
